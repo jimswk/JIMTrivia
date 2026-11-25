@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cabaran Trivia Booth - JIM Sarawak</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Tone.js untuk kesan bunyi interaktif tanpa fail luar -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- Canvas Confetti untuk kesan kemenangan -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            overscroll-behavior: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        h1, h2, h3, .font-display {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        /* Warna Korporat JIM */
+        .bg-jim-navy { background-color: #0B1F3A; }
+        .bg-jim-blue { background-color: #163A6B; }
+        .text-jim-navy { color: #0B1F3A; }
+        .text-jim-gold { color: #D4AF37; }
+        .bg-jim-gold { background-color: #D4AF37; }
+        .border-jim-gold { border-color: #D4AF37; }
+
+        /* Animasi Halus */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(212, 175, 55, 0); }
+        }
+        .btn-glow {
+            animation: pulseGlow 2s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between text-slate-800 bg-gradient-to-br from-slate-100 via-blue-50 to-slate-200">
+
+    <!-- Header Korporat -->
+    <header class="bg-jim-navy text-white shadow-lg border-b-4 border-jim-gold sticky top-0 z-30">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <!-- Logo Rasmi -->
+                <div class="w-12 h-12 rounded-xl bg-white p-1 shadow-md flex-shrink-0 flex items-center justify-center overflow-hidden">
+                    <img src="https://ik.imagekit.io/487xv3vag/Layer%202.png?updatedAt=1782975228989"
+                         alt="Logo Jabatan Imigresen Malaysia"
+                         onerror="this.onerror=null; this.src='https://placehold.co/96x96/0B1F3A/D4AF37?text=JIM';"
+                         class="w-full h-full object-contain">
+                </div>
+                <div>
+                    <h1 class="text-base sm:text-lg font-extrabold tracking-tight leading-tight text-white">
+                        JABATAN IMIGRESEN MALAYSIA
+                    </h1>
+                    <p class="text-xs sm:text-sm font-semibold text-amber-400 tracking-wider">
+                        NEGERI SARAWAK • BOOTH INTERAKTIF
+                    </p>
+                </div>
+            </div>
+
+            <!-- Butang Statistik & Kawalan Bunyi -->
+            <div class="flex items-center space-x-2">
+                <button id="btn-sound" onclick="toggleSound()" title="Togol Bunyi" class="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition active:scale-95">
+                    <i data-lucide="volume-2" id="icon-sound" class="w-5 h-5"></i>
+                </button>
+                <button onclick="openStatsModal()" class="flex items-center space-x-1.5 px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-jim-navy font-bold text-xs sm:text-sm shadow transition active:scale-95">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Statistik</span>
+                    <span id="header-visitor-count" class="bg-jim-navy text-amber-400 px-2 py-0.5 rounded-full text-xs">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Kandungan Utama (Paparan Dinamik) -->
+    <main class="flex-grow flex items-center justify-center p-4 sm:p-6">
+        <div class="w-full max-w-xl">
+
+            <!-- SKRIN 1: HALAMAN UTAMA & PENDAFTARAN RINGKAS PENGUNJUNG -->
+            <section id="screen-welcome" class="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden transition-all duration-300">
+                <div class="bg-gradient-to-r from-[#0B1F3A] to-[#1A437A] p-6 sm:p-8 text-center text-white relative overflow-hidden">
+                    <!-- Hiasan Latar Belakang -->
+                    <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-amber-400/10 blur-xl"></div>
+                    <div class="absolute -left-8 -bottom-8 w-32 h-32 rounded-full bg-blue-400/10 blur-xl"></div>
+
+                    <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-400/20 border border-amber-400/40 text-amber-300 text-xs font-bold uppercase tracking-wider mb-3">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        <span>Cabaran Trivia Booth</span>
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold mb-2 leading-tight">
+                        Jawab 1 Soalan &amp; <span class="text-amber-400">Terima Saguhati!</span>
+                    </h2>
+                    <p class="text-blue-100 text-sm sm:text-base max-w-md mx-auto">
+                        Uji pengetahuan asas anda mengenai Jabatan Imigresen Malaysia Negeri Sarawak dan dapatkan cenderahati saguhati istimewa!
+                    </p>
+                </div>
+
+                <form id="form-visitor" onsubmit="startTrivia(event)" class="p-6 sm:p-8 space-y-5">
+                    <div>
+                        <label for="visitor-name" class="block text-sm font-bold text-slate-700 mb-1.5">
+                            Nama Penuh / Nama Panggilan <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                <i data-lucide="user" class="w-5 h-5"></i>
+                            </div>
+                            <input type="text" id="visitor-name" required placeholder="Contoh: Ahmad bin Ali"
+                                class="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="visitor-category" class="block text-sm font-bold text-slate-700 mb-1.5">
+                                Kategori Pengunjung
+                            </label>
+                            <select id="visitor-category"
+                                class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition">
+                                <option value="Orang Awam">Orang Awam</option>
+                                <option value="Pelajar / Mahasiswa">Pelajar / Mahasiswa</option>
+                                <option value="Penjawat Awam">Penjawat Awam</option>
+                                <option value="Pelancong / Warga Asing">Pelancong / Warga Asing</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="visitor-age-range" class="block text-sm font-bold text-slate-700 mb-1.5">
+                                Julat Umur
+                            </label>
+                            <select id="visitor-age-range"
+                                class="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition">
+                                <option value="18 dan ke bawah">18 dan ke bawah</option>
+                                <option value="19 - 39" selected>19 - 39</option>
+                                <option value="40 - 59">40 - 59</option>
+                                <option value="60 dan ke atas">60 dan ke atas</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="submit"
+                            class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#0B1F3A] to-[#1E4B8A] hover:from-[#132F56] hover:to-[#255AA3] text-white font-extrabold text-lg shadow-lg flex items-center justify-center space-x-2 transition transform active:scale-[0.98] btn-glow">
+                            <span>MULA SOALAN TRIVIA</span>
+                            <i data-lucide="arrow-right-circle" class="w-6 h-6 text-amber-400"></i>
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- SKRIN 2: SOALAN TRIVIA (1 SOALAN RAWAK) -->
+            <section id="screen-trivia" class="hidden bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
+                <div class="bg-jim-navy px-6 py-4 flex items-center justify-between text-white">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-8 h-8 rounded-lg bg-amber-400 text-jim-navy font-extrabold flex items-center justify-center text-sm">Q1</span>
+                        <span class="font-bold text-sm sm:text-base">Soalan Trivia JIM Sarawak</span>
+                    </div>
+                    <span id="trivia-badge-category" class="text-xs font-semibold px-3 py-1 rounded-full bg-white/10 text-amber-300">
+                        Pengetahuan Am
+                    </span>
+                </div>
+
+                <div class="p-6 sm:p-8">
+                    <!-- Kotak Soalan -->
+                    <div class="mb-6">
+                        <p class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-1">
+                            Hai, <span id="display-visitor-name" class="underline">Pengunjung</span>! Sila pilih jawapan tepat:
+                        </p>
+                        <h3 id="question-text" class="text-xl sm:text-2xl font-extrabold text-slate-800 leading-snug">
+                            Memuatkan soalan...
+                        </h3>
+                    </div>
+
+                    <!-- Pilihan Jawapan -->
+                    <div id="options-container" class="space-y-3">
+                        <!-- Pilihan dijana secara dinamik -->
+                    </div>
+
+                    <!-- Maklum Balas Jawapan (Muncul selepas pilih) -->
+                    <div id="answer-feedback" class="hidden mt-6 p-4 rounded-2xl border">
+                        <div class="flex items-start space-x-3">
+                            <div id="feedback-icon" class="mt-0.5 flex-shrink-0"></div>
+                            <div>
+                                <h4 id="feedback-title" class="font-extrabold text-base"></h4>
+                                <p id="feedback-desc" class="text-sm mt-1"></p>
+                            </div>
+                        </div>
+                        <button id="btn-proceed-congrats" onclick="goToCongratsScreen()" class="hidden mt-4 w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-jim-navy font-extrabold text-base shadow-md flex items-center justify-center space-x-2 transition active:scale-95">
+                            <i data-lucide="gift" class="w-5 h-5"></i>
+                            <span>TEBUS SAGUHATI ANDA!</span>
+                        </button>
+                        <button id="btn-finish-wrong" onclick="resetToHome()" class="hidden mt-4 w-full py-3.5 px-5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-base shadow flex items-center justify-center space-x-2 transition active:scale-95">
+                            <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                            <span>SELESAI &amp; PENGUNJUNG SETERUSNYA</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SKRIN 3: PAPARAN TAHNIAH & TUNTUTAN SAGUHATI -->
+            <section id="screen-congrats" class="hidden bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden text-center">
+                <div class="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-500 px-6 py-4 text-jim-navy">
+                    <h2 class="text-xl sm:text-2xl font-extrabold flex items-center justify-center space-x-2">
+                        <i data-lucide="sparkles" class="w-6 h-6"></i>
+                        <span>KEJAYAAN TRIVIA</span>
+                        <i data-lucide="sparkles" class="w-6 h-6"></i>
+                    </h2>
+                    <p class="text-xs sm:text-sm font-bold opacity-90">
+                        Jawapan anda tepat! Anda layak menerima cenderahati saguhati.
+                    </p>
+                </div>
+
+                <div class="p-6 sm:p-8">
+                    <!-- Kotak Paparan Tahniah -->
+                    <div class="w-full max-w-sm mx-auto rounded-2xl border-4 border-amber-400 bg-gradient-to-b from-amber-50 to-white p-6 shadow-lg flex flex-col items-center justify-center animate-float">
+                        <div class="w-16 h-16 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mb-3 shadow-inner">
+                            <i data-lucide="gift" class="w-9 h-9"></i>
+                        </div>
+                        <h3 class="text-3xl sm:text-4xl font-black tracking-tight uppercase text-amber-600">
+                            TAHNIAH!
+                        </h3>
+                        <p class="text-base sm:text-lg font-extrabold mt-1 text-jim-navy">
+                            Anda Menerima SAGUHATI Istimewa!
+                        </p>
+                        <p id="congrats-visitor-name" class="text-xs font-bold text-slate-500 mt-2 uppercase tracking-wider">
+                            Pengunjung Booth JIM Sarawak
+                        </p>
+                    </div>
+
+                    <!-- Panel Pengesahan Petugas Booth -->
+                    <div class="mt-6 p-5 rounded-2xl bg-slate-50 border border-slate-200 transition-all">
+                        <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full text-xs font-extrabold mb-2 bg-amber-100 text-amber-800">
+                            <i data-lucide="award" class="w-3.5 h-3.5"></i>
+                            <span>LAYAK MENERIMA SAGUHATI</span>
+                        </div>
+                        <p class="text-sm text-slate-700 font-medium mb-4">
+                            Sila tunjukkan skrin <strong>TAHNIAH</strong> ini kepada petugas kaunter JIM Sarawak untuk menuntut cenderahati saguhati anda.
+                        </p>
+                        <button onclick="resetToHome()" class="w-full py-4 px-6 rounded-2xl bg-jim-navy hover:bg-blue-900 text-white font-extrabold text-base shadow-lg flex items-center justify-center space-x-2 transition active:scale-95">
+                            <i data-lucide="user-plus" class="w-5 h-5 text-amber-400"></i>
+                            <span>PENGUNJUNG SETERUSNYA</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer Ringkas -->
+    <footer class="py-3 px-4 text-center text-xs text-slate-500 font-medium">
+        &copy; 2026 Jabatan Imigresen Malaysia Negeri Sarawak • Sistem Aktiviti &amp; Statistik Booth
+    </footer>
+
+    <!-- MODAL STATISTIK PENGUNJUNG & REKOD -->
+    <div id="modal-stats" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <!-- Header Modal -->
+            <div class="bg-jim-navy text-white px-6 py-4 flex items-center justify-between border-b-2 border-jim-gold">
+                <div class="flex items-center space-x-2.5">
+                    <i data-lucide="pie-chart" class="w-6 h-6 text-amber-400"></i>
+                    <div>
+                        <h3 class="text-lg font-extrabold leading-tight">Statistik Pengunjung Booth</h3>
+                        <p class="text-xs text-blue-200">Jabatan Imigresen Malaysia Negeri Sarawak</p>
+                    </div>
+                </div>
+                <button onclick="closeStatsModal()" class="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Kandungan Statistik -->
+            <div class="p-6 overflow-y-auto space-y-6">
+                <!-- Tetapan Sambungan Google Sheets -->
+                <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl space-y-3">
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <h4 class="text-sm font-extrabold text-emerald-900 flex items-center space-x-1.5">
+                                <i data-lucide="sheet" class="w-4 h-4 text-emerald-600"></i>
+                                <span>Integrasi Google Sheets (Rekod Kehadiran Pengunjung)</span>
+                            </h4>
+                            <p class="text-xs text-emerald-700 mt-0.5">
+                                Rekod pengunjung akan dihantar terus ke Google Sheets (tanpa keputusan goresan).
+                            </p>
+                        </div>
+                        <button onclick="toggleScriptGuide()" class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs whitespace-nowrap transition">
+                            Panduan &amp; Kod Skrip
+                        </button>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <input type="url" id="google-sheet-url" placeholder="Tampal URL Web App Google Apps Script (https://script.google.com/macros/s/...)"
+                            onchange="saveGoogleSheetUrl(this.value)"
+                            class="flex-1 px-3.5 py-2 bg-white border border-emerald-300 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-600">
+                        <button onclick="testGoogleSheetConnection()" id="btn-test-gsheet" class="px-4 py-2 rounded-xl bg-jim-navy hover:bg-blue-900 text-white font-bold text-xs whitespace-nowrap transition">
+                            Uji Sambungan
+                        </button>
+                    </div>
+                    <p id="gsheet-status-msg" class="text-xs font-semibold text-emerald-800 hidden"></p>
+
+                    <!-- Panduan Kod Google Apps Script (Boleh Dibuka/Tutup) -->
+                    <div id="gsheet-guide-box" class="hidden bg-white p-3.5 rounded-xl border border-emerald-200 text-xs text-slate-700 space-y-2">
+                        <p class="font-bold text-slate-900">Langkah Penyediaan Google Sheets:</p>
+                        <ol class="list-decimal list-inside space-y-1 text-slate-600">
+                            <li>Buka Google Sheets baharu, klik menu <strong>Extensions &gt; Apps Script</strong>.</li>
+                            <li>Padam kod asal dan tampal kod di bawah, kemudian klik <strong>Deploy &gt; New deployment</strong>.</li>
+                            <li>Pilih jenis <strong>Web app</strong>, tetapkan <em>Who has access</em> kepada <strong>Anyone</strong>, dan salin URL Web App ke ruangan di atas.</li>
+                        </ol>
+                        <div class="relative">
+                            <pre id="apps-script-code" class="bg-slate-900 text-emerald-300 p-3 rounded-lg overflow-x-auto text-[11px] leading-relaxed">function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(["Tarikh", "Masa", "Nama Pengunjung", "Kategori", "Julat Umur"]);
+  }
+  var data = JSON.parse(e.postData.contents);
+  sheet.appendRow([data.date, data.timestamp, data.name, data.category, data.ageRange]);
+  return ContentService.createTextOutput(JSON.stringify({status: "success"}))
+    .setMimeType(ContentService.MimeType.JSON);
+}</pre>
+                            <button onclick="copyAppsScriptCode()" class="mt-2 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center space-x-1">
+                                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                                <span id="copy-script-label">Salin Kod Apps Script</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kad Ringkasan KPI (Fokus Kehadiran Sahaja) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <div class="bg-blue-50 border border-blue-100 p-4 rounded-2xl">
+                        <p class="text-xs font-bold text-blue-600 uppercase">Jumlah Kehadiran Pengunjung</p>
+                        <p id="stat-total" class="text-2xl sm:text-3xl font-black text-jim-navy mt-1">0</p>
+                    </div>
+                    <div class="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl">
+                        <p class="text-xs font-bold text-emerald-600 uppercase">Status Google Sheets</p>
+                        <p id="stat-sync-count" class="text-xl sm:text-2xl font-black text-emerald-800 mt-1.5">0 Dihantar</p>
+                    </div>
+                </div>
+
+                <!-- Pecahan Kategori Pengunjung -->
+                <div>
+                    <h4 class="text-sm font-extrabold text-slate-800 mb-2">Pecahan Kehadiran Mengikut Kategori</h4>
+                    <div id="category-breakdown" class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                        <!-- Dijana dinamik -->
+                    </div>
+                </div>
+
+                <!-- Jadual Rekod Pengunjung Sahaja -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-sm font-extrabold text-slate-800">Log Kehadiran Pengunjung</h4>
+                        <div class="flex space-x-2">
+                            <button onclick="exportToCSV()" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center space-x-1 transition">
+                                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                                <span>Muat Turun CSV</span>
+                            </button>
+                            <button onclick="confirmClearData()" class="px-3 py-1.5 rounded-xl bg-red-100 hover:bg-red-200 text-red-700 font-bold text-xs flex items-center space-x-1 transition">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                <span>Set Semula</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="border border-slate-200 rounded-2xl overflow-hidden">
+                        <div class="overflow-x-auto max-h-60">
+                            <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                                <thead class="bg-slate-100 text-slate-600 font-bold sticky top-0">
+                                    <tr>
+                                        <th class="py-2.5 px-3">Tarikh &amp; Masa</th>
+                                        <th class="py-2.5 px-3">Nama Pengunjung</th>
+                                        <th class="py-2.5 px-3">Kategori</th>
+                                        <th class="py-2.5 px-3">Julat Umur</th>
+                                        <th class="py-2.5 px-3">Status Google Sheets</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="records-table-body" class="divide-y divide-slate-100">
+                                    <tr>
+                                        <td colspan="5" class="py-6 text-center text-slate-400 font-medium">Belum ada rekod pengunjung.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PENGESAHAN PADAM DATA (Ganti confirm() browser) -->
+    <div id="modal-confirm-reset" class="hidden fixed inset-0 z-50 bg-slate-900/80 flex items-center justify-center p-4">
+        <div class="bg-white max-w-sm w-full rounded-3xl p-6 text-center shadow-2xl">
+            <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-3">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-extrabold text-slate-800">Padam Semua Rekod?</h3>
+            <p class="text-sm text-slate-500 mt-1 mb-5">Semua statistik pengunjung dalam sesi ini akan dipadamkan secara kekal.</p>
+            <div class="flex space-x-3">
+                <button onclick="closeConfirmReset()" class="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm">Batal</button>
+                <button onclick="executeClearData()" class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm">Ya, Padam</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. PANGKALAN SOALAN TRIVIA JIM SARAWAK
+        // ==========================================
+        const TRIVIA_BANK = [
+            {
+                category: "Perkhidmatan & Dokumen",
+                question: "Apakah dokumen perjalanan rasmi yang dikeluarkan oleh Jabatan Imigresen Malaysia kepada warganegara Malaysia untuk ke luar negara?",
+                options: [
+                    "Pasport Malaysia Antarabangsa (PMA)",
+                    "Kad Pengenalan Pintar (MyKad)",
+                    "Sijil Kelahiran Antarabangsa",
+                    "Lesen Memandu Kompeten"
+                ],
+                correctIndex: 0,
+                fact: "Pasport Malaysia Antarabangsa (PMA) menggunakan teknologi biometrik dan cip keselamatan tinggi."
+            },
+            {
+                category: "JIM Negeri Sarawak",
+                question: "Di manakah letaknya Ibu Pejabat Jabatan Imigresen Malaysia Negeri Sarawak?",
+                options: [
+                    "Wisma Persekutuan, Sibu",
+                    "Bangunan Sultan Iskandar, Jalan Simpang Tiga, Kuching",
+                    "Kompleks Islam Sarawak, Miri",
+                    "Menara Pelita, Petra Jaya"
+                ],
+                correctIndex: 1,
+                fact: "Ibu Pejabat JIM Negeri Sarawak beroperasi di Bangunan Sultan Iskandar, Jalan Simpang Tiga, Kuching."
+            },
+            {
+                category: "Kawalan Sempadan Sarawak",
+                question: "Sarawak berkongsi sempadan darat antarabangsa dengan negara jiran yang manakah?",
+                options: [
+                    "Thailand dan Singapura",
+                    "Indonesia (Kalimantan) dan Brunei Darussalam",
+                    "Filipina dan Vietnam",
+                    "Indonesia dan Thailand"
+                ],
+                correctIndex: 1,
+                fact: "JIM Sarawak mengawal pintu masuk darat utama seperti ICQS Tebedu, Biawak, Sungai Tujoh, dan Tedungan."
+            },
+            {
+                category: "Pintu Masuk Utama",
+                question: "Manakah antara berikut merupakan Kompleks Imigresen, Kastam, Kuarantin dan Keselamatan (ICQS) darat utama antara Sarawak dan Kalimantan Barat, Indonesia?",
+                options: [
+                    "ICQS Padang Besar",
+                    "ICQS Tebedu",
+                    "ICQS Bukit Kayu Hitam",
+                    "ICQS Rantau Panjang"
+                ],
+                correctIndex: 1,
+                fact: "ICQS Tebedu di Bahagian Serian merupakan pintu masuk darat tertua dan utama menghubungkan Sarawak dengan Entikong, Indonesia."
+            },
+            {
+                category: "Perkhidmatan Dalam Talian",
+                question: "Apakah sistem dalam talian rasmi JIM bagi memudahkan orang ramai membuat permohonan pembaharuan pasport secara atas talian?",
+                options: [
+                    "MyOnline Pasport",
+                    "MySejahtera",
+                    "MyJPJ",
+                    "e-Tanah"
+                ],
+                correctIndex: 0,
+                fact: "Melalui portal MyOnline Pasport, pemohon boleh memperbaharui pasport secara dalam talian dan mengambilnya di pejabat pengeluar pilihan."
+            },
+            {
+                category: "Kedaulatan & Keselamatan",
+                question: "Apakah slogan rasmi Jabatan Imigresen Malaysia?",
+                options: [
+                    "Cepat dan Mesra",
+                    "Kedaulatan dan Keselamatan Negara Tanpa Kompromi",
+                    "Berkhidmat Untuk Negara",
+                    "Integriti Amalan Kita"
+                ],
+                correctIndex: 1,
+                fact: "JIM komited memastikan kedaulatan dan keselamatan pintu masuk negara sentiasa terpelihara tanpa kompromi."
+            },
+            {
+                category: "Kemudahan Perjalanan",
+                question: "Berapakah tempoh sah laku standard bagi Pasport Malaysia Antarabangsa (PMA) untuk pemohon dewasa biasa?",
+                options: [
+                    "2 Tahun",
+                    "5 Tahun",
+                    "10 Tahun",
+                    "Seumur Hidup"
+                ],
+                correctIndex: 1,
+                fact: "Tempoh sah laku Pasport Malaysia Antarabangsa adalah selama 5 tahun dari tarikh dikeluarkan."
+            },
+            {
+                category: "Peraturan Imigresen",
+                question: "Apakah dokumen khas yang diperlukan oleh warganegara Malaysia dari Semenanjung atau Sabah untuk memasuki negeri Sarawak bagi tujuan lawatan sosial/pelancongan?",
+                options: [
+                    "Pas Lawatan Sosial (Dokumen Perjalanan Terhad / MyKad dengan slip masuk)",
+                    "Visa Pelajar Antarabangsa",
+                    "Permit Kerja Sementara",
+                    "Tidak perlu melalui pemeriksaan Imigresen"
+                ],
+                correctIndex: 0,
+                fact: "Selaras dengan autonomi Imigresen Negeri Sarawak (MA63), pelawat dari Semenanjung/Sabah perlu melalui pemeriksaan Imigresen dan diberikan Pas Lawatan Sosial."
+            }
+        ];
+
+        // ==========================================
+        // 2. KEADAAN APLIKASI (IN-MEMORY STATE)
+        // ==========================================
+        let visitorRecords = [];
+        let currentVisitor = null;
+        let currentQuestion = null;
+        let lastQuestionIndex = -1;
+        let isSoundEnabled = true;
+        let googleSheetWebAppUrl = ""; // URL Google Apps Script Web App
+
+        // ==========================================
+        // 3. SISTEM AUDIO SINTETIK (TONE.JS)
+        // ==========================================
+        function playSoundEffect(type) {
+            if (!isSoundEnabled || typeof Tone === 'undefined') return;
+            try {
+                if (Tone.context.state !== 'running') {
+                    Tone.start();
+                }
+                const synth = new Tone.PolySynth(Tone.Synth).toDestination();
+                synth.volume.value = -8;
+
+                if (type === 'click') {
+                    synth.triggerAttackRelease("C5", "32n");
+                } else if (type === 'correct') {
+                    const now = Tone.now();
+                    synth.triggerAttackRelease("C5", "16n", now);
+                    synth.triggerAttackRelease("E5", "16n", now + 0.1);
+                    synth.triggerAttackRelease("G5", "8n", now + 0.2);
+                } else if (type === 'wrong') {
+                    const now = Tone.now();
+                    synth.triggerAttackRelease("E4", "16n", now);
+                    synth.triggerAttackRelease("C4", "8n", now + 0.15);
+                } else if (type === 'tahniah') {
+                    const now = Tone.now();
+                    synth.triggerAttackRelease(["C5", "E5", "G5"], "16n", now);
+                    synth.triggerAttackRelease(["D5", "F#5", "A5"], "16n", now + 0.15);
+                    synth.triggerAttackRelease(["E5", "G#5", "B5"], "16n", now + 0.30);
+                    synth.triggerAttackRelease(["C6", "E6", "G6"], "4n", now + 0.45);
+                }
+            } catch (e) {
+                // Abaikan ralat audio jika pelayar menyekat autoplay
+            }
+        }
+
+        function toggleSound() {
+            isSoundEnabled = !isSoundEnabled;
+            const icon = document.getElementById('icon-sound');
+            icon.setAttribute('data-lucide', isSoundEnabled ? 'volume-2' : 'volume-x');
+            lucide.createIcons();
+            if (isSoundEnabled) playSoundEffect('click');
+        }
+
+        // ==========================================
+        // 4. ALIRAN TRIVIA & PENDAFTARAN
+        // ==========================================
+        function startTrivia(event) {
+            event.preventDefault();
+            playSoundEffect('click');
+
+            const nameInput = document.getElementById('visitor-name').value.trim();
+            const categoryInput = document.getElementById('visitor-category').value;
+            const ageRangeInput = document.getElementById('visitor-age-range').value;
+
+            if (!nameInput) return;
+
+            const now = new Date();
+            // Sediakan objek pengunjung (Hanya maklumat pengunjung, tanpa keputusan goresan)
+            currentVisitor = {
+                id: Date.now(),
+                date: now.toLocaleDateString('ms-MY'),
+                timestamp: now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }),
+                name: nameInput,
+                category: categoryInput,
+                ageRange: ageRangeInput,
+                syncStatus: 'Menunggu'
+            };
+
+            // Simpan & hantar rekod kehadiran pengunjung terus ke Google Sheets semasa mendaftar
+            saveVisitorRecord(currentVisitor);
+
+            // Pilih 1 soalan rawak yang berbeza daripada soalan sebelumnya
+            let randomIndex;
+            do {
+                randomIndex = Math.floor(Math.random() * TRIVIA_BANK.length);
+            } while (randomIndex === lastQuestionIndex && TRIVIA_BANK.length > 1);
+            lastQuestionIndex = randomIndex;
+            currentQuestion = TRIVIA_BANK[randomIndex];
+
+            // Kemaskini paparan skrin Trivia
+            document.getElementById('display-visitor-name').textContent = currentVisitor.name;
+            document.getElementById('trivia-badge-category').textContent = currentQuestion.category;
+            document.getElementById('question-text').textContent = currentQuestion.question;
+
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+
+            const letters = ['A', 'B', 'C', 'D'];
+            currentQuestion.options.forEach((optText, idx) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'option-btn w-full text-left p-4 rounded-2xl border-2 border-slate-200 hover:border-blue-600 hover:bg-blue-50/60 transition flex items-center space-x-3.5 group active:scale-[0.99]';
+                btn.onclick = () => selectAnswer(idx, btn);
+                btn.innerHTML = `
+                    <span class="w-9 h-9 rounded-xl bg-slate-100 group-hover:bg-blue-600 group-hover:text-white text-slate-700 font-extrabold flex items-center justify-center flex-shrink-0 transition">
+                        ${letters[idx]}
+                    </span>
+                    <span class="font-semibold text-slate-800 text-sm sm:text-base">${optText}</span>
+                `;
+                optionsContainer.appendChild(btn);
+            });
+
+            // Sembunyikan maklum balas lama
+            document.getElementById('answer-feedback').classList.add('hidden');
+            document.getElementById('btn-proceed-congrats').classList.add('hidden');
+            document.getElementById('btn-finish-wrong').classList.add('hidden');
+
+            // Tukar Skrin
+            switchScreen('screen-trivia');
+        }
+
+        function selectAnswer(selectedIndex, selectedBtn) {
+            // Nyahaktifkan semua butang pilihan selepas dijawab
+            const allBtns = document.querySelectorAll('.option-btn');
+            allBtns.forEach(b => {
+                b.disabled = true;
+                b.classList.remove('hover:border-blue-600', 'hover:bg-blue-50/60');
+            });
+
+            const isCorrect = (selectedIndex === currentQuestion.correctIndex);
+            currentVisitor.answeredCorrectly = isCorrect;
+
+            const feedbackBox = document.getElementById('answer-feedback');
+            const feedbackIcon = document.getElementById('feedback-icon');
+            const feedbackTitle = document.getElementById('feedback-title');
+            const feedbackDesc = document.getElementById('feedback-desc');
+
+            feedbackBox.classList.remove('hidden', 'bg-emerald-50', 'border-emerald-200', 'bg-red-50', 'border-red-200');
+
+            if (isCorrect) {
+                playSoundEffect('correct');
+                selectedBtn.classList.remove('border-slate-200');
+                selectedBtn.classList.add('border-emerald-500', 'bg-emerald-50');
+                selectedBtn.querySelector('span:first-child').classList.replace('bg-slate-100', 'bg-emerald-600');
+                selectedBtn.querySelector('span:first-child').classList.replace('text-slate-700', 'text-white');
+
+                feedbackBox.classList.add('bg-emerald-50', 'border-emerald-200', 'text-emerald-900');
+                feedbackIcon.innerHTML = `<i data-lucide="check-circle-2" class="w-6 h-6 text-emerald-600"></i>`;
+                feedbackTitle.textContent = "Tahniah! Jawapan Anda Tepat!";
+                feedbackDesc.textContent = currentQuestion.fact;
+
+                document.getElementById('btn-proceed-congrats').classList.remove('hidden');
+            } else {
+                playSoundEffect('wrong');
+                selectedBtn.classList.remove('border-slate-200');
+                selectedBtn.classList.add('border-red-500', 'bg-red-50');
+                selectedBtn.querySelector('span:first-child').classList.replace('bg-slate-100', 'bg-red-600');
+                selectedBtn.querySelector('span:first-child').classList.replace('text-slate-700', 'text-white');
+
+                // Tandakan jawapan sebenar
+                const correctBtn = allBtns[currentQuestion.correctIndex];
+                correctBtn.classList.remove('border-slate-200');
+                correctBtn.classList.add('border-emerald-500', 'bg-emerald-50/70');
+
+                feedbackBox.classList.add('bg-red-50', 'border-red-200', 'text-red-900');
+                feedbackIcon.innerHTML = `<i data-lucide="x-circle" class="w-6 h-6 text-red-600"></i>`;
+                feedbackTitle.textContent = "Maaf, Jawapan Kurang Tepat";
+                feedbackDesc.textContent = `Jawapan tepat ialah: ${currentQuestion.options[currentQuestion.correctIndex]}. Terima kasih kerana menyertai trivia kami!`;
+
+                document.getElementById('btn-finish-wrong').classList.remove('hidden');
+            }
+
+            lucide.createIcons();
+        }
+
+        // ==========================================
+        // 5. PAPARAN TAHNIAH & SAGUHATI
+        // ==========================================
+        function goToCongratsScreen() {
+            document.getElementById('congrats-visitor-name').textContent = currentVisitor ? currentVisitor.name : 'Pengunjung Booth JIM Sarawak';
+            lucide.createIcons();
+            switchScreen('screen-congrats');
+
+            playSoundEffect('tahniah');
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 90,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#D4AF37', '#0B1F3A', '#FBBF24', '#2563EB']
+                });
+            }
+        }
+
+        // ==========================================
+        // 6. PENGURUSAN REKOD & INTEGRASI GOOGLE SHEETS
+        // ==========================================
+        function saveGoogleSheetUrl(url) {
+            googleSheetWebAppUrl = url.trim();
+            const statusMsg = document.getElementById('gsheet-status-msg');
+            if (googleSheetWebAppUrl) {
+                statusMsg.textContent = "URL Google Sheets telah ditetapkan. Rekod baharu akan dihantar secara automatik.";
+                statusMsg.className = "text-xs font-semibold text-emerald-700";
+                statusMsg.classList.remove('hidden');
+            } else {
+                statusMsg.classList.add('hidden');
+            }
+        }
+
+        function toggleScriptGuide() {
+            const guide = document.getElementById('gsheet-guide-box');
+            guide.classList.toggle('hidden');
+            lucide.createIcons();
+        }
+
+        function copyAppsScriptCode() {
+            const codeText = document.getElementById('apps-script-code').textContent;
+            const tempInput = document.createElement('textarea');
+            tempInput.value = codeText;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            const label = document.getElementById('copy-script-label');
+            label.textContent = "Disalin!";
+            setTimeout(() => { label.textContent = "Salin Kod Apps Script"; }, 2000);
+        }
+
+        async function sendRecordToGoogleSheets(record) {
+            if (!googleSheetWebAppUrl) {
+                record.syncStatus = 'Lokal Sahaja (Tiada URL)';
+                updateStatsUI();
+                return;
+            }
+
+            record.syncStatus = 'Menghantar...';
+            updateStatsUI();
+
+            // Hanya hantar maklumat pengunjung sahaja ke Google Sheets
+            const payload = {
+                date: record.date,
+                timestamp: record.timestamp,
+                name: record.name,
+                category: record.category,
+                ageRange: record.ageRange
+            };
+
+            try {
+                await fetch(googleSheetWebAppUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                record.syncStatus = 'Dihantar ke Sheets';
+            } catch (error) {
+                record.syncStatus = 'Gagal Hantar';
+            }
+            updateStatsUI();
+        }
+
+        async function testGoogleSheetConnection() {
+            const urlInput = document.getElementById('google-sheet-url').value.trim();
+            const statusMsg = document.getElementById('gsheet-status-msg');
+            if (!urlInput) {
+                statusMsg.textContent = "Sila masukkan URL Web App Google Apps Script terlebih dahulu.";
+                statusMsg.className = "text-xs font-semibold text-red-600";
+                statusMsg.classList.remove('hidden');
+                return;
+            }
+            saveGoogleSheetUrl(urlInput);
+            const btn = document.getElementById('btn-test-gsheet');
+            btn.disabled = true;
+            btn.textContent = "Menguji...";
+
+            const testRecord = {
+                date: new Date().toLocaleDateString('ms-MY'),
+                timestamp: new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }),
+                name: "Ujian Sambungan Sistem",
+                category: "Petugas Booth",
+                ageRange: "19 - 39"
+            };
+
+            try {
+                await fetch(googleSheetWebAppUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testRecord)
+                });
+                statusMsg.textContent = "Permintaan ujian berjaya dihantar! Sila semak baris baharu di Google Sheets anda.";
+                statusMsg.className = "text-xs font-semibold text-emerald-700";
+                statusMsg.classList.remove('hidden');
+            } catch (err) {
+                statusMsg.textContent = "Ralat sambungan. Pastikan URL Web App adalah tepat dan akses ditetapkan kepada 'Anyone'.";
+                statusMsg.className = "text-xs font-semibold text-red-600";
+                statusMsg.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Uji Sambungan";
+            }
+        }
+
+        function saveVisitorRecord(record) {
+            if (!visitorRecords.some(r => r.id === record.id)) {
+                visitorRecords.unshift(record);
+                updateStatsUI();
+                sendRecordToGoogleSheets(record);
+            }
+        }
+
+        function updateStatsUI() {
+            const total = visitorRecords.length;
+            const syncedCount = visitorRecords.filter(r => r.syncStatus === 'Dihantar ke Sheets').length;
+
+            // Kemaskini lencana header & kad KPI
+            document.getElementById('header-visitor-count').textContent = total;
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-sync-count').textContent = `${syncedCount} Dihantar`;
+
+            // Pecahan mengikut kategori pengunjung
+            const categories = ["Orang Awam", "Pelajar / Mahasiswa", "Penjawat Awam", "Pelancong / Warga Asing"];
+            const catContainer = document.getElementById('category-breakdown');
+            catContainer.innerHTML = categories.map(cat => {
+                const count = visitorRecords.filter(r => r.category === cat).length;
+                return `
+                    <div class="bg-slate-50 border border-slate-200 p-2.5 rounded-xl flex items-center justify-between">
+                        <span class="text-slate-600 font-medium truncate pr-1">${cat}</span>
+                        <span class="font-extrabold text-jim-navy bg-white px-2 py-0.5 rounded-md border border-slate-200">${count}</span>
+                    </div>
+                `;
+            }).join('');
+
+            // Kemaskini jadual log pengunjung (Tanpa keputusan goresan)
+            const tbody = document.getElementById('records-table-body');
+            if (total === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 font-medium">Belum ada rekod pengunjung.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = visitorRecords.map(r => {
+                let statusBadge = 'bg-slate-100 text-slate-600';
+                if (r.syncStatus === 'Dihantar ke Sheets') statusBadge = 'bg-emerald-100 text-emerald-800 font-bold';
+                else if (r.syncStatus === 'Menghantar...') statusBadge = 'bg-amber-100 text-amber-800 font-bold';
+                else if (r.syncStatus === 'Gagal Hantar') statusBadge = 'bg-red-100 text-red-800 font-bold';
+
+                return `
+                    <tr class="hover:bg-slate-50">
+                        <td class="py-2.5 px-3 text-slate-500 whitespace-nowrap">${r.date} ${r.timestamp}</td>
+                        <td class="py-2.5 px-3 font-bold text-slate-800">${escapeHTML(r.name)}</td>
+                        <td class="py-2.5 px-3 text-slate-600">${escapeHTML(r.category)}</td>
+                        <td class="py-2.5 px-3 text-slate-600">${escapeHTML(r.ageRange)}</td>
+                        <td class="py-2.5 px-3">
+                            <span class="px-2.5 py-1 rounded-full text-xs ${statusBadge}">${r.syncStatus}</span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function exportToCSV() {
+            if (visitorRecords.length === 0) return;
+            const headers = ["Tarikh", "Masa", "Nama Pengunjung", "Kategori", "Julat Umur"];
+            const rows = visitorRecords.map(r => [
+                `"${r.date}"`,
+                `"${r.timestamp}"`,
+                `"${r.name.replace(/"/g, '""')}"`,
+                `"${r.category}"`,
+                `"${r.ageRange}"`
+            ]);
+
+            const csvContent = "data:text/csv;charset=utf-8,"
+                + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            const dateStr = new Date().toISOString().slice(0, 10);
+            link.setAttribute("download", `Kehadiran_Pengunjung_JIM_Sarawak_${dateStr}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // ==========================================
+        // 7. NAVIGASI SKRIN & MODAL
+        // ==========================================
+        function switchScreen(screenId) {
+            ['screen-welcome', 'screen-trivia', 'screen-congrats'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function resetToHome() {
+            playSoundEffect('click');
+            document.getElementById('form-visitor').reset();
+            currentVisitor = null;
+            switchScreen('screen-welcome');
+        }
+
+        function openStatsModal() {
+            playSoundEffect('click');
+            updateStatsUI();
+            document.getElementById('modal-stats').classList.remove('hidden');
+        }
+
+        function closeStatsModal() {
+            playSoundEffect('click');
+            document.getElementById('modal-stats').classList.add('hidden');
+        }
+
+        function confirmClearData() {
+            document.getElementById('modal-confirm-reset').classList.remove('hidden');
+        }
+
+        function closeConfirmReset() {
+            document.getElementById('modal-confirm-reset').classList.add('hidden');
+        }
+
+        function executeClearData() {
+            visitorRecords = [];
+            updateStatsUI();
+            closeConfirmReset();
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag]));
+        }
+
+        // Inisialisasi Ikon Lucide semasa halaman dimuatkan
+        window.onload = function() {
+            lucide.createIcons();
+            updateStatsUI();
+        };
+    </script>
+</body>
+</html>
